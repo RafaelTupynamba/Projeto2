@@ -1,4 +1,3 @@
-This is the user-library for the CS161 project 2 (Go version).
+Biblioteca de usuário para o Projeto 2
 
-The userlib_test.go file is a useful file to see how to use the
-primitives as well.
+O arquivo de testes userlib_test.go é útil para ver como usar as primitivas.
