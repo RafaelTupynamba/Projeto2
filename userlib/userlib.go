@@ -23,26 +23,27 @@ import (
 
 type UUID = uuid.UUID
 
-// RSA key size
+// Tamanho da chave RSA
 var RSAKeySize = 2048
 
-// AES block size and key size
+// Tamanho do bloco e da chave AES
 var AESBlockSize = aes.BlockSize
 var AESKeySize = 16
 
-// Hash and MAC size
+// Tamanho do hash e do MAC
 var HashSize = sha512.Size
 
 
-// Debug print true/false
+// Imprimição de depuração (true/false)
 var DebugPrint = false
 
-// DebugMsg. Helper function: Does formatted printing to stderr if
-// the DebugPrint global is set.  All our testing ignores stderr,
-// so feel free to use this for any sort of testing you want.
+// DebugMsg. Função auxiliar: faz impressão formatada no stderr se
+// o global DebugPrint estiver definido. Todos os nossos testes
+// ignoram o stderr, então sinta-se à vontade para usá-la
+// para qualquer tipo de teste que desejar.
 
 func SetDebugStatus(status bool){
-	DebugPrint = status
+        DebugPrint = status
 }
 
 func DebugMsg(format string, args ...interface{}) {
@@ -52,8 +53,8 @@ func DebugMsg(format string, args ...interface{}) {
     }
 }
 
-// RandomBytes. Helper function: Returns a byte slice of the specificed
-// size filled with random data
+// RandomBytes. Função auxiliar: retorna uma fatia de bytes do tamanho
+// especificado preenchida com dados aleatórios
 func RandomBytes(bytes int) (data []byte) {
     data = make([]byte, bytes)
     if _, err := io.ReadFull(rand.Reader, data); err != nil {
@@ -72,20 +73,20 @@ type PrivateKeyType struct {
     PrivKey rsa.PrivateKey
 }
 
-// Datastore and Keystore variables
+// Variáveis de datastore e keystore
 var datastore map[UUID][]byte = make(map[UUID][]byte)
 var keystore map[string]PublicKeyType = make(map[string]PublicKeyType)
 
 
 /*
 ********************************************
-**           Datastore Functions          **
-**       DatastoreSet, DatastoreGet,      **
-**     DatastoreDelete, DatastoreClear    **
+**         Funções do Datastore           **
+**   DatastoreSet, DatastoreGet,          **
+** DatastoreDelete, DatastoreClear        **
 ********************************************
 */
 
-// Sets the value in the datastore
+// Define o valor no datastore
 func DatastoreSet(key UUID, value []byte) {
     foo := make([]byte, len(value))
     copy(foo, value)
@@ -93,7 +94,7 @@ func DatastoreSet(key UUID, value []byte) {
     datastore[key] = foo
 }
 
-// Returns the value if it exists
+// Retorna o valor, se existir
 func DatastoreGet(key UUID) (value []byte, ok bool) {
     value, ok = datastore[key]
     if ok && value != nil {
@@ -104,46 +105,46 @@ func DatastoreGet(key UUID) (value []byte, ok bool) {
     return
 }
 
-// Deletes a key
+// Remove uma chave
 func DatastoreDelete(key UUID) {
     delete(datastore, key)
 }
 
-// Use this in testing to reset the datastore to empty
+// Use esta função nos testes para redefinir o datastore como vazio
 func DatastoreClear() {
     datastore = make(map[UUID][]byte)
 }
 
-// Use this in testing to reset the keystore to empty
+// Use esta função nos testes para redefinir o keystore como vazio
 func KeystoreClear() {
     keystore = make(map[string]PublicKeyType)
 }
 
-// Sets the value in the keystore
+// Define o valor no keystore
 func KeystoreSet(key string, value PublicKeyType) error {
     _, present := keystore[key]
     if present != false {
-       return errors.New("That entry in the Keystore has been taken.")
+       return errors.New("Essa entrada no Keystore já foi ocupada.")
     }
 
     keystore[key] = value
     return nil
 }
 
-// Returns the value if it exists
+// Retorna o valor, se existir
 func KeystoreGet(key string) (value PublicKeyType, ok bool) {
     value, ok = keystore[key]
     return
 }
 
-// Use this in testing to get the underlying map if you want
-// to play with the datastore.
+// Use esta função nos testes para obter o mapa subjacente,
+// caso queira manipular o datastore.
 func DatastoreGetMap() map[UUID][]byte {
     return datastore
 }
 
-// Use this in testing to get the underlying map if you want 
-// to play with the keystore.
+// Use esta função nos testes para obter o mapa subjacente,
+// caso queira manipular o keystore.
 func KeystoreGetMap() map[string]PublicKeyType {
     return keystore
 }
@@ -151,16 +152,16 @@ func KeystoreGetMap() map[string]PublicKeyType {
 
 /*
 ********************************************
-**         Public Key Encryption          **
-**       PKEKeyGen, PKEEnc, PKEDec        **
+**      Criptografia de Chave Pública     **
+**     PKEKeyGen, PKEEnc, PKEDec          **
 ********************************************
 */
 
-// Four structs to help you manage your different keys
-// You should only have 1 of each struct
-// keyType should be either:
-//     "PKE": encryption
-//     "DS": authentication and integrity
+// Quatro structs para ajudar a gerenciar suas diferentes chaves.
+// Você deve ter apenas 1 de cada struct.
+// keyType deve ser um dos seguintes:
+//     "PKE": criptografia
+//     "DS": autenticação e integridade
 
 type PKEEncKey = PublicKeyType
 type PKEDecKey = PrivateKeyType
@@ -168,7 +169,7 @@ type PKEDecKey = PrivateKeyType
 type DSSignKey = PrivateKeyType
 type DSVerifyKey = PublicKeyType
 
-// Generates a key pair for public-key encryption via RSA
+// Gera um par de chaves para criptografia de chave pública via RSA
 func PKEKeyGen() (PKEEncKey, PKEDecKey, error) {
     RSAPrivKey, err := rsa.GenerateKey(rand.Reader, RSAKeySize)
     RSAPubKey := RSAPrivKey.PublicKey
@@ -184,12 +185,12 @@ func PKEKeyGen() (PKEEncKey, PKEDecKey, error) {
     return PKEEncKeyRes, PKEDecKeyRes, err
 }
 
-// Encrypts a byte stream via RSA-OAEP with sha512 as hash
+// Criptografa um fluxo de bytes via RSA-OAEP com sha512 como hash
 func PKEEnc(ek PKEEncKey, plaintext []byte) ([]byte, error) {
     RSAPubKey := &ek.PubKey
 
     if ek.KeyType != "PKE" {
-        return nil, errors.New("Using a non-PKE key for PKE.")
+        return nil, errors.New("Usando uma chave não-PKE para PKE.")
     }
 
     ciphertext, err := rsa.EncryptOAEP(sha512.New(), rand.Reader, RSAPubKey, plaintext, nil)
@@ -197,12 +198,12 @@ func PKEEnc(ek PKEEncKey, plaintext []byte) ([]byte, error) {
     return ciphertext, err
 }
 
-// Decrypts a byte stream encrypted with RSA-OAEP/sha512
+// Descriptografa um fluxo de bytes criptografado com RSA-OAEP/sha512
 func PKEDec(dk PKEDecKey, ciphertext []byte) ([]byte, error) {
     RSAPrivKey := &dk.PrivKey
 
     if dk.KeyType != "PKE" {
-        return nil, errors.New("Using a non-PKE key for PKE.")
+        return nil, errors.New("Usando uma chave não-PKE para PKE.")
     }
 
     decryption, err := rsa.DecryptOAEP(sha512.New(), rand.Reader, RSAPrivKey, ciphertext, nil)
@@ -213,12 +214,12 @@ func PKEDec(dk PKEDecKey, ciphertext []byte) ([]byte, error) {
 
 /*
 ********************************************
-**           Digital Signature            **
+**           Assinatura Digital           **
 **       DSKeyGen, DSSign, DSVerify       **
 ********************************************
 */
 
-// Generates a key pair for digital signature via RSA
+// Gera um par de chaves para assinatura digital via RSA
 func DSKeyGen() (DSSignKey, DSVerifyKey, error) {
     RSAPrivKey, err := rsa.GenerateKey(rand.Reader, RSAKeySize)
     RSAPubKey := RSAPrivKey.PublicKey
@@ -234,12 +235,12 @@ func DSKeyGen() (DSSignKey, DSVerifyKey, error) {
     return DSSignKeyRes, DSVerifyKeyRes, err
 }
 
-// Signs a byte stream via SHA256 and PKCS1v15
+// Assina um fluxo de bytes via SHA256 e PKCS1v15
 func DSSign(sk DSSignKey, msg []byte) ([]byte, error) {
     RSAPrivKey := &sk.PrivKey
 
     if sk.KeyType != "DS" {
-        return nil, errors.New("Using a non-DS key for DS.")
+        return nil, errors.New("Usando uma chave não-DS para DS.")
     }
 
     hashed := sha512.Sum512(msg)
@@ -249,12 +250,12 @@ func DSSign(sk DSSignKey, msg []byte) ([]byte, error) {
     return sig, err
 }
 
-// Verifies a signature signed with SHA256 and PKCS1v15
+// Verifica uma assinatura criada com SHA256 e PKCS1v15
 func DSVerify(vk DSVerifyKey, msg []byte, sig []byte) error {
     RSAPubKey := &vk.PubKey
 
     if vk.KeyType != "DS" {
-        return errors.New("Using a non-DS key for DS.")
+        return errors.New("Usando uma chave não-DS para DS.")
     }
 
     hashed := sha512.Sum512(msg)
@@ -272,10 +273,10 @@ func DSVerify(vk DSVerifyKey, msg []byte, sig []byte) error {
 ********************************************
 */
 
-// Evaluate the HMAC using sha512
+// Avalia o HMAC usando sha512
 func HMACEval(key []byte, msg []byte) ([]byte, error) {
     if len(key) != 16 && len(key) != 24 && len(key) != 32 {
-       panic(errors.New("The input as key for HMAC should be a 16-byte key."))
+       panic(errors.New("A chave de entrada para HMAC deve ter 16, 24 ou 32 bytes."))
     }
 
     mac := hmac.New(sha512.New, key)
@@ -285,8 +286,8 @@ func HMACEval(key []byte, msg []byte) ([]byte, error) {
     return res, nil
 }
 
-// Equals comparison for hashes/MACs
-// Does NOT leak timing.
+// Comparação de igualdade para hashes/MACs.
+// NÃO vaza informações de tempo de execução.
 func HMACEqual(a []byte, b []byte) bool {
     return hmac.Equal(a, b)
 }
@@ -299,8 +300,8 @@ func HMACEqual(a []byte, b []byte) bool {
 ********************************************
 */
 
-// Argon2:  Automatically choses a decent combination of iterations and memory
-// Use this to generate a key from a password
+// Argon2: Escolhe automaticamente uma combinação adequada de iterações e memória.
+// Use esta função para gerar uma chave a partir de uma senha.
 func Argon2Key(password []byte, salt []byte, keyLen uint32) []byte {
     return argon2.IDKey(password, salt, 1, 64*1024, 4, keyLen)
 }
@@ -308,16 +309,16 @@ func Argon2Key(password []byte, salt []byte, keyLen uint32) []byte {
 
 /*
 ********************************************
-**        Symmetric Encryption            **
-**           SymEnc, SymDec               **
+**        Criptografia Simétrica           **
+**          SymEnc, SymDec                **
 ********************************************
 */
 
-// Encrypts a byte slice with AES-CTR
-// Length of iv should be == AESBlockSize
+// Criptografa uma fatia de bytes com AES-CTR.
+// O comprimento do iv deve ser == AESBlockSize
 func SymEnc(key []byte, iv []byte, plaintext []byte) []byte {
     if len(iv) != AESBlockSize {
-        panic("IV length not equal to AESBlockSize")
+        panic("Comprimento do IV diferente de AESBlockSize")
     }
 
     block, err := aes.NewCipher(key)
@@ -334,7 +335,7 @@ func SymEnc(key []byte, iv []byte, plaintext []byte) []byte {
     return ciphertext
 }
 
-// Decrypts a ciphertext encrypted with AES-CTR
+// Descriptografa um texto cifrado criptografado com AES-CBC
 func SymDec(key []byte, ciphertext []byte) []byte {
     block, err := aes.NewCipher(key)
     if err != nil {

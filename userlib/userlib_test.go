@@ -5,28 +5,28 @@ import "bytes"
 import "encoding/hex"
 import "github.com/google/uuid"
 
-// Golang has a very powerful routine for building tests.
+// O Golang possui uma rotina muito poderosa para construir testes.
 
-// Run with "go test" to run the tests
+// Execute com "go test" para rodar os testes.
 
-// And "go test -v" to run verbosely so you see all the logging and
-// what tests pass/fail individually.
+// E "go test -v" para rodar em modo detalhado, para ver todo o log e
+// quais testes passam/falham individualmente.
 
-// And "go test -cover" to check your code coverage in your tests
+// E "go test -cover" para verificar a cobertura de código nos seus testes.
 
-// Default test strings
+// Strings padrão para testes
 var key1 []byte = []byte("cs161teststring1")
 var key2 []byte = []byte("cs161teststring2")
 var key3 []byte = []byte("cs161teststring3")
 var key4 []byte = []byte("cs161teststring4")
 var key5 []byte = []byte("cs161teststring5")
 
-// Creates a UUID from the supplied bytes
-// Use for testing only!
+// Cria um UUID a partir dos bytes fornecidos.
+// Use apenas para testes!
 func UUIDFromBytes(t *testing.T, b []byte) (u UUID) {
     u, err := uuid.FromBytes(b)
     if err != nil {
-        t.Error("Got FromBytes error:", err)
+        t.Error("Erro em FromBytes:", err)
     }
 
     return
@@ -55,49 +55,49 @@ func TestDatastore(t *testing.T) {
 
     _, valid := DatastoreGet(UUID3)
     if valid {
-        t.Error("Datastore fetched UUID3 when it wasn't supposed to")
+        t.Error("Datastore recuperou UUID3 quando não deveria")
     }
 
     data, valid := DatastoreGet(UUID1)
     if !valid || string(data) != "foo" {
-        t.Error("Error with fetching 'foo' from UUID1")
+        t.Error("Erro ao recuperar 'foo' do UUID1")
     }
 
     _, valid = DatastoreGet(UUID3)
     if valid {
-        t.Error("Returned when nothing, oops")
+        t.Error("Retornou algo quando não deveria, oops")
     }
 
     DatastoreSet(UUID2, []byte("bar"))
 
     data, valid = DatastoreGet(UUID1)
     if !valid || string(data) != "foo" {
-        t.Error("Error with fetching 'foo' from UUID1")
+        t.Error("Erro ao recuperar 'foo' do UUID1")
     }
 
     DatastoreDelete(UUID1)
 
     _, valid = DatastoreGet(UUID1)
     if valid {
-        t.Error("DatastoreGet succeeded even after deleting UUID1")
+        t.Error("DatastoreGet teve sucesso mesmo após excluir UUID1")
     }
 
     data, valid = DatastoreGet(UUID2)
     if !valid || string(data) != "bar" {
-        t.Error("Error with fetching 'bar' from UUID2")
+        t.Error("Erro ao recuperar 'bar' do UUID2")
     }
 
     DatastoreClear()
 
     _, valid = DatastoreGet(UUID2)
     if valid {
-        t.Error("DatastoreGet succeeded even after DatastoreClear")
+        t.Error("DatastoreGet teve sucesso mesmo após DatastoreClear")
     }
 
-    t.Log("Datastore fetch", data)
-    t.Log("Datastore map", DatastoreGetMap())
+    t.Log("Recuperação do Datastore", data)
+    t.Log("Mapa do Datastore", DatastoreGetMap())
     DatastoreClear()
-    t.Log("Datastore map", DatastoreGetMap())
+    t.Log("Mapa do Datastore", DatastoreGetMap())
 }
 
 func TestKeystore(t *testing.T) {
@@ -105,7 +105,7 @@ func TestKeystore(t *testing.T) {
     _, DSVerifyKey, err2 := DSKeyGen()
 
     if err1 != nil || err2 != nil {
-        t.Error("PKEKeyGen() failed")
+        t.Error("PKEKeyGen() falhou")
     }
 
     KeystoreSet("user1", RSAPubKey)
@@ -113,73 +113,73 @@ func TestKeystore(t *testing.T) {
 
     _, valid := KeystoreGet("user3")
     if valid {
-        t.Error("Keystore fetched UUID3 when it wasn't supposed to")
+        t.Error("Keystore recuperou UUID3 quando não deveria")
     }
 
     data, valid := KeystoreGet("user1")
     if !valid {
-        t.Error("Key stored at UUID1 doesn't match")
+        t.Error("Chave armazenada em UUID1 não corresponde")
     }
 
     data, valid = KeystoreGet("user2")
     if !valid {
-        t.Error("Key stored at UUID2 doesn't match")
+        t.Error("Chave armazenada em UUID2 não corresponde")
     }
 
     KeystoreClear()
 
     _, valid = KeystoreGet("user1")
     if valid {
-        t.Error("KeystoreGet succeeded even after KeystoreClear")
+        t.Error("KeystoreGet teve sucesso mesmo após KeystoreClear")
     }
 
-    t.Log("Keystore fetch", data)
-    t.Log("Keystore map", KeystoreGetMap())
+    t.Log("Recuperação do Keystore", data)
+    t.Log("Mapa do Keystore", KeystoreGetMap())
     KeystoreClear()
-    t.Log("Keystore map", KeystoreGetMap())
+    t.Log("Mapa do Keystore", KeystoreGetMap())
 }
 
 func TestRSA(t *testing.T) {
 
-    // Test RSA Encrypt and Decrypt
+    // Testa criptografia e descriptografia RSA
     RSAPubKey, RSAPrivKey, err := PKEKeyGen()
     if err != nil {
-        t.Error("PKEKeyGen() failed", err)
+        t.Error("PKEKeyGen() falhou", err)
     }
 
     t.Log(RSAPubKey)
     ciphertext, err := PKEEnc(RSAPubKey, []byte("Squeamish Ossifrage"))
     if err != nil {
-        t.Error("PKEEnc() error", err)
+        t.Error("Erro em PKEEnc()", err)
     }
 
     decryption, err := PKEDec(RSAPrivKey, ciphertext)
     if err != nil || (string(decryption) != "Squeamish Ossifrage") {
-        t.Error("Decryption failed", err)
+        t.Error("Descriptografia falhou", err)
     }
 
-    // Test RSA Sign and Verify
+    // Testa assinatura e verificação RSA
     DSSignKey, DSVerifyKey, err := DSKeyGen()
     if err != nil {
-        t.Error("DSKeyGen() failed", err)
+        t.Error("DSKeyGen() falhou", err)
     }
 
     sign, err := DSSign(DSSignKey, []byte("Squeamish Ossifrage"))
     if err != nil {
-        t.Error("RSA sign failure")
+        t.Error("Falha na assinatura RSA")
     }
 
     err = DSVerify(DSVerifyKey, []byte("Squeamish Ossifrage"), sign)
     if err != nil {
-        t.Error("RSA verification failure")
+        t.Error("Falha na verificação RSA")
     }
 
     err = DSVerify(DSVerifyKey, []byte("foo"), sign)
     if err == nil {
-        t.Error("RSA verification worked when it shouldn't")
+        t.Error("A verificação RSA funcionou quando não deveria")
     }
 
-    t.Log("Error return", err)
+    t.Log("Retorno de erro", err)
 }
 
 func TestHMAC(t *testing.T) {
@@ -189,17 +189,17 @@ func TestHMAC(t *testing.T) {
     hmac1a, _ := HMACEval(key1, msga)
     hmac1b, _ := HMACEval(key1, msgb)
     if HMACEqual(hmac1a, hmac1b) {
-        t.Error("HMACs are equal for different data")
+        t.Error("HMACs são iguais para dados diferentes")
     }
 
     hmac2a, _ := HMACEval(key2, msga)
     if HMACEqual(hmac1a, hmac2a) {
-        t.Error("HMACs are equal for different key")
+        t.Error("HMACs são iguais para chaves diferentes")
     }
 
     hmac1a2, _ := HMACEval(key1, msga)
     if !HMACEqual(hmac1a, hmac1a2) {
-        t.Error("HMACs are not equal when they should be")
+        t.Error("HMACs não são iguais quando deveriam ser")
     }
 }
 
@@ -211,7 +211,7 @@ func TestArgon2(t *testing.T) {
     equal := bytes.Equal
 
     if equal(val1, val2) || equal(val1, val3) || equal(val2, val3) {
-        t.Error("Argon2 problem")
+        t.Error("Problema com Argon2")
     }
     t.Log(hex.EncodeToString(val1))
     t.Log(hex.EncodeToString(val2))
@@ -220,19 +220,19 @@ func TestArgon2(t *testing.T) {
 
 func TestStreamCipher(t *testing.T) {
     iv := RandomBytes(16)
-    t.Log("Random IV", iv)
+    t.Log("IV aleatório", iv)
 
     ciphertext := SymEnc(key1, iv, []byte("foo"))
     decryption := SymDec(key1, ciphertext)
 
-    t.Log("Decrypted messagege:", string(decryption))
+    t.Log("Mensagem descriptografada:", string(decryption))
     if string(decryption) != "foo" {
-        t.Error("Symmetric decryption failure")
+        t.Error("Falha na descriptografia simétrica")
     }
 }
 
-// Deliberate fail example
+// Exemplo de falha deliberada
 // func TestFailure(t *testing.T){
-//	t.Log("This test will fail")
-//	t.Error("Test of failure")
+//        t.Log("Este teste vai falhar")
+//        t.Error("Teste de falha")
 //}
